@@ -67,31 +67,31 @@ with tab2:
         ))
     st.plotly_chart(fig_error, use_container_width=True)
 
-    with tab3:
-        st.markdown("**Concept:** The Loss Surface shows how the error changes for every possible combination of $m$ and $b$.")
-        
-        # Generate a grid of m and b values
-        m_grid = np.linspace(-5, 10, 50)
-        b_grid = np.linspace(-50, 100, 50)
-        M, B = np.meshgrid(m_grid, b_grid)
-        
-        # Calculate MSE for the entire grid
-        Z = np.zeros_like(M)
-        for i in range(M.shape[0]):
-            for j in range(M.shape[1]):
-                preds = M[i,j] * X + B[i,j]
-                Z[i,j] = np.mean((y - preds)**2)
-                
-        fig_surface = go.Figure(data=[go.Surface(z=Z, x=M, y=B, colorscale='Viridis')])
-        
-        # Plot current position
-        fig_surface.add_trace(go.Scatter3d(
-            x=[m], y=[b], z=[current_mse],
-            mode='markers', marker=dict(size=8, color='red'), name='Current Parameters'
-        ))
-        
-        fig_surface.update_layout(scene=dict(xaxis_title='Slope (m)', yaxis_title='Intercept (b)', zaxis_title='MSE'))
-        st.plotly_chart(fig_surface, use_container_width=True)
+with tab3:
+    st.markdown("**Concept:** The Loss Surface shows how the error changes for every possible combination of $m$ and $b$.")
+    
+    # Generate a grid of m and b values
+    m_grid = np.linspace(-5, 10, 50)
+    b_grid = np.linspace(-50, 100, 50)
+    M, B = np.meshgrid(m_grid, b_grid)
+    
+    # Calculate MSE for the entire grid
+    Z = np.zeros_like(M)
+    for i in range(M.shape[0]):
+        for j in range(M.shape[1]):
+            preds = M[i,j] * X + B[i,j]
+            Z[i,j] = np.mean((y - preds)**2)
+            
+    fig_surface = go.Figure(data=[go.Surface(z=Z, x=M, y=B, colorscale='Viridis')])
+    
+    # Plot current position
+    fig_surface.add_trace(go.Scatter3d(
+        x=[m], y=[b], z=[current_mse],
+        mode='markers', marker=dict(size=8, color='red'), name='Current Parameters'
+    ))
+    
+    fig_surface.update_layout(scene=dict(xaxis_title='Slope (m)', yaxis_title='Intercept (b)', zaxis_title='MSE'))
+    st.plotly_chart(fig_surface, use_container_width=True)
 
 with tab4:
     st.markdown("**Concept:** Gradient descent takes steps down the loss surface to find the minimum.")
