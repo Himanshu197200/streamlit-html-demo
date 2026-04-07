@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
+
 @st.cache_data 
 def generate_data(n_samples=50,noise_level=10.0,add_outliers=False):
     np.random.seed(42)
