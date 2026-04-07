@@ -124,3 +124,103 @@ with tab4:
             
         st.success("Optimization Complete!")
         st.line_chart(history_loss) # Simple loss curve
+
+
+#### --- STEP 5: Tab 5 (Learning Rate Experiments) --- ####
+with tab5:
+    st.markdown("### The Impact of Step Size")
+    st.markdown("**Concept:** The Learning Rate ($\\alpha$) controls how big of a step we take down the loss surface during Gradient Descent. If it's too small, learning is slow. If it's too big, the model overshoots and diverges.")
+    
+    st.markdown("Let's compare three different learning rates simultaneously, starting from the current $m$ and $b$ values in your sidebar.")
+    
+    # Use columns to let the user pick comparison rates
+    col1, col2, col3 = st.columns(3)
+    lr1 = col1.number_input("Learning Rate 1", value=0.0001, format="%f", step=0.0001)
+    lr2 = col2.number_input("Learning Rate 2", value=0.0010, format="%f", step=0.0001)
+    lr3 = col3.number_input("Learning Rate 3", value=0.0050, format="%f", step=0.0001)
+    
+    if st.button("Run Comparison", key="run_lr_comp"):
+        # Helper function to run GD and return the loss history
+        def run_gd_sim(lr_to_test):
+            curr_m, curr_b = m, b # Start from sidebar values
+            loss_history = []
+            for _ in range(iterations): # Iterations from sidebar
+                preds = curr_m * X + curr_b
+                error = preds - y
+                dm = (2/len(X)) * np.dot(error, X)
+                db = (2/len(X)) * np.sum(error)
+                
+                curr_m -= lr_to_test * dm
+                curr_b -= lr_to_test * db
+                
+                loss = np.mean((y - (curr_m * X + curr_b))**2)
+                loss_history.append(loss)
+            return loss_history
+        
+        # Run simulations
+        loss_1 = run_gd_sim(lr1)
+        loss_2 = run_gd_sim(lr2)
+        loss_3 = run_gd_sim(lr3)
+        
+        # Plot the comparison
+        fig_lr = go.Figure()
+        fig_lr.add_trace(go.Scatter(y=loss_1, mode='lines', name=f'LR = {lr1}', line=dict(width=3)))
+        fig_lr.add_trace(go.Scatter(y=loss_2, mode='lines', name=f'LR = {lr2}', line=dict(width=3)))
+        fig_lr.add_trace(go.Scatter(y=loss_3, mode='lines', name=f'LR = {lr3}', line=dict(width=3)))
+        
+        fig_lr.update_layout(
+            title="Loss vs. Iterations", 
+            xaxis_title="Iteration", 
+            yaxis_title="Mean Squared Error (Loss)"
+        )
+        st.plotly_chart(fig_lr, use_container_width=True)
+        
+    st.info("💡 **What you should observe:** Try setting 'Learning Rate 3' to a high number (like `0.01`). You should see its line shoot straight up (divergence) because the steps are too large, while the smaller learning rates smoothly curve downward to minimize the error.")
+
+
+#### --- STEP 6: Tab 6 (Noise & Robustness) --- ####
+with tab6:
+    st.markdown("### Sensitivity to Outliers")
+    st.markdown("**Concept:** Linear regression tries to minimize *Mean Squared Error*. Because the errors are squared, massive outliers carry a huge penalty. This causes the best-fit line to skew heavily toward extreme data points.")
+    
+    st.markdown("Below, we use an algorithm to calculate the absolute mathematical **best fit** line for a perfectly clean dataset, and compare it to the best fit line for your current dataset.")
+    
+    # Generate clean baseline data for comparison
+    X_clean, y_clean = generate_data(noise_level=0.0, add_outliers=False)
+    
+    # Reshape X arrays because Scikit-Learn expects 2D arrays
+    X_sk = X.reshape(-1, 1)
+    X_clean_sk = X_clean.reshape(-1, 1)
+    
+    # Fit exact mathematical models using scikit-learn
+    model_clean = LinearRegression().fit(X_clean_sk, y_clean)
+    model_current = LinearRegression().fit(X_sk, y)
+    
+    # Generate line predictions
+    y_pred_clean = model_clean.predict(X_clean_sk)
+    y_pred_current = model_current.predict(X_sk)
+    
+    # Build visual comparison
+    fig_robust = go.Figure()
+    
+    # Plot current noisy/outlier data points
+    fig_robust.add_trace(go.Scatter(
+        x=X, y=y, mode='markers', name='Current Data', marker=dict(color='rgba(0, 100, 255, 0.6)')
+    ))
+    
+    # Plot Baseline Line (Clean)
+    fig_robust.add_trace(go.Scatter(
+        x=X_clean, y=y_pred_clean, mode='lines', 
+        name='Ideal Line (Clean Data)', line=dict(color='green', dash='dash', width=3)
+    ))
+    
+    # Plot Adjusted Line (Current Data)
+    fig_robust.add_trace(go.Scatter(
+        x=X, y=y_pred_current, mode='lines', 
+        name='Current Best Fit', line=dict(color='red', width=4)
+    ))
+    
+    fig_robust.update_layout(title="Comparing Ideal Fit vs. Noisy Fit")
+    st.plotly_chart(fig_robust, use_container_width=True)
+    
+    st.info("💡 **What you should observe:** Go to the sidebar and toggle **'Inject Outliers'** ON. Watch how drastically the solid Red line gets 'pulled' up or down by those 3 crazy data points compared to the dashed Green ideal line. This proves why standard Linear Regression isn't always robust to dirty real-world data.")
